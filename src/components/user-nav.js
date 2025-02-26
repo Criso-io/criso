@@ -12,6 +12,10 @@ import {
 export function UserNav({ user }) {
   if (!user) return null;
 
+  const handleSignOut = async () => {
+    await signOut({ callbackUrl: '/' })
+  }
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -34,7 +38,7 @@ export function UserNav({ user }) {
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48">
-        <DropdownMenuItem onClick={() => signOut()}>
+        <DropdownMenuItem onClick={handleSignOut}>
           Sign out
         </DropdownMenuItem>
       </DropdownMenuContent>
