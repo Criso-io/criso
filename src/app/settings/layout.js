@@ -19,10 +19,12 @@ async function SettingsLayout({ children }) {
         <header className="bg-white">
           <div className="px-8 py-4 flex items-center justify-between">
             <div>
-              <h1 className="text-xl font-semibold text-gray-900">Settings</h1>
-              <p className="text-sm text-gray-500 mt-1">
-                Manage your Glimp account.
-              </p>
+              <div className="space-y-1">
+                <h2 className="text-lg font-medium text-gray-900">Settings</h2>
+                <p className="text-sm text-gray-500">
+                  Manage your criso account.
+                </p>
+              </div>
             </div>
           </div>
         </header>

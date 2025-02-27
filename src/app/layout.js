@@ -4,8 +4,8 @@ import { GeistMono } from 'geist/font/mono'
 import { Providers } from './providers'
 
 export const metadata = {
-  title: 'Glimp - Website Monitoring',
-  description: 'Monitor your websites and APIs with ease',
+  title: 'Criso - Website & API Monitoring',
+  description: 'Monitor your websites and APIs with ease.',
 }
 
 export default function RootLayout({ children }) {

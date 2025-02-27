@@ -1,7 +1,9 @@
 import { SignInButton } from '../components/auth/sign-in-button'
+import { GetStartedButton } from '../components/get-started-button'
 import { getServerSession } from 'next-auth'
 import { redirect } from 'next/navigation'
 import Image from 'next/image'
+import Link from 'next/link'
 
 export default async function Home() {
   const session = await getServerSession()
@@ -22,7 +24,7 @@ export default async function Home() {
               {/* Navbar */}
               <nav className="relative w-full max-w-6xl mx-auto px-6 py-6 flex items-center justify-between">
                 <div className="flex items-center">
-                  <Image src="/logo.svg" alt="Glimp" width={100} height={24} priority className="h-6 w-auto" />
+                  <Link href="/"><Image src="/logo.svg" alt="criso" width={100} height={30} priority className="h-7 w-auto" /></Link>
                 </div>
                 
                 <div className="hidden md:flex items-center space-x-12">
@@ -31,10 +33,7 @@ export default async function Home() {
                   <a href="/docs" className="text-sm font-medium text-gray-900 hover:text-black transition-colors relative after:absolute after:bottom-0 after:left-0 after:h-[1px] after:w-0 hover:after:w-full after:bg-black after:transition-all">Docs</a>
                 </div>
 
-                <button className="group relative inline-flex items-center justify-center rounded-md text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-gray-950 disabled:pointer-events-none disabled:opacity-50 bg-gray-800 text-white h-9 px-4 py-2 hover:bg-gradient-to-b hover:from-gray-800 hover:to-gray-700">
-                  <span className="relative z-10">Sign in</span>
-                  <div className="absolute inset-[-2px] rounded-md border border-gray-700 opacity-0 transition-all group-hover:opacity-100" />
-                </button>
+                <SignInButton />
               </nav>
 
               {/* Hero Content */}
@@ -48,10 +47,7 @@ export default async function Home() {
                     <p className="text-lg text-gray-600 mb-8">
                       Monitor performance, detect errors, and track global availability knowing issues before your users.
                     </p>
-                    <button className="group relative inline-flex items-center justify-center rounded-md text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-gray-950 disabled:pointer-events-none disabled:opacity-50 bg-gray-800 text-white h-9 px-4 py-2 hover:bg-gradient-to-b hover:from-gray-800 hover:to-gray-700">
-                      <span className="relative z-10">Get started</span>
-                      <div className="absolute inset-[-2px] rounded-md border border-gray-700 opacity-0 transition-all group-hover:opacity-100" />
-                    </button>
+                    <GetStartedButton />
                   </div>
 
                   {/* Right Column - Preview */}
@@ -231,8 +227,7 @@ export default async function Home() {
               <footer className="relative w-full max-w-5xl mx-auto px-6 py-12">
                 <div className="flex flex-col sm:flex-row items-center justify-between">
                   <div className="flex items-center space-x-2 mb-4 sm:mb-0">
-                    <Image src="/logo.svg" alt="Glimp" width={80} height={20} className="h-5 w-auto" />
-                    <span className="text-sm text-gray-600">© 2024 Glimp. All rights reserved.</span>
+                    <span className="text-sm text-gray-600">© 2024 Drill Software Limited. All rights reserved.</span>
                   </div>
                   <div className="flex items-center space-x-6">
                     <a href="#" className="text-sm text-gray-600 hover:text-gray-900">Privacy</a>
