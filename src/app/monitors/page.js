@@ -3,28 +3,33 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
+import { MonitorCard } from '@/components/monitor-card'
 
 export default function Monitors() {
   const router = useRouter()
   const { data: session } = useSession()
   const [monitors, setMonitors] = useState(null)
 
-  useEffect(() => {
-    async function fetchMonitors() {
-      if (!session?.user?.id) return
+  const fetchMonitors = async () => {
+    if (!session?.user?.id) return
 
-      try {
-        const response = await fetch('/api/monitors')
-        if (!response.ok) throw new Error('Failed to fetch monitors')
-        const data = await response.json()
-        setMonitors(data)
-      } catch (error) {
-        console.error('Error fetching monitors:', error)
-        setMonitors([])
-      }
+    try {
+      const response = await fetch('/api/monitors')
+      if (!response.ok) throw new Error('Failed to fetch monitors')
+      const data = await response.json()
+      setMonitors(data)
+    } catch (error) {
+      console.error('Error fetching monitors:', error)
+      setMonitors([])
     }
+  }
 
+  useEffect(() => {
     fetchMonitors()
+
+    // Set up polling for real-time updates
+    const interval = setInterval(fetchMonitors, 30000) // Poll every 30 seconds
+    return () => clearInterval(interval)
   }, [session])
 
   if (monitors === null) {
@@ -59,43 +64,7 @@ export default function Monitors() {
     <div className="space-y-6">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {monitors.map((monitor) => (
-          <div
-            key={monitor.id}
-            className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition-shadow"
-          >
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-medium text-gray-900">{monitor.name}</h3>
-              <span 
-                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                  monitor.last_status 
-                    ? 'bg-green-100 text-green-800' 
-                    : 'bg-red-100 text-red-800'
-                }`}
-              >
-                {monitor.last_status ? 'Online' : 'Offline'}
-              </span>
-            </div>
-            <p className="text-sm text-gray-500 truncate">{monitor.url}</p>
-            <div className="mt-4 flex items-center justify-between text-sm text-gray-500">
-              <span>Every {monitor.frequency} minutes</span>
-              {monitor.last_response_time && (
-                <span>{monitor.last_response_time}ms</span>
-              )}
-            </div>
-            <div className="mt-4 flex items-center justify-between">
-              <span className="text-xs text-gray-500">
-                Last checked: {monitor.last_check_at 
-                  ? new Date(monitor.last_check_at).toLocaleString() 
-                  : 'Never'}
-              </span>
-              <button
-                onClick={() => {/* Add edit functionality */}}
-                className="text-sm text-gray-600 hover:text-black"
-              >
-                Edit
-              </button>
-            </div>
-          </div>
+          <MonitorCard key={monitor.id} monitor={monitor} />
         ))}
       </div>
     </div>

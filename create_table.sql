@@ -82,6 +82,21 @@ create policy "Users can delete own monitors"
     on public.monitors for delete
     using (auth.uid() = user_id);
 
+create policy "Users can view checks for own monitors"
+    on public.monitor_checks for select
+    using (
+        exists (
+            select 1
+            from public.monitors
+            where monitors.id = monitor_checks.monitor_id
+            and monitors.user_id = auth.uid()
+        )
+    );
+
+create policy "System can insert monitor checks"
+    on public.monitor_checks for insert
+    with check (true);
+
 -- Functions
 create or replace function public.handle_new_user()
 returns trigger as $$
