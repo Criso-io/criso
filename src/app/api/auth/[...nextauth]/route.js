@@ -35,7 +35,7 @@ export const authOptions = {
           email: user.email,
           email_verified: true,
           user_metadata: {
-            full_name: user.name,
+            name: user.name,
             avatar_url: user.image,
             github_username: profile.login,
           },
@@ -71,7 +71,7 @@ export const authOptions = {
             .insert({
               id: userId, // Use the Supabase auth user ID
               email: user.email,
-              full_name: user.name,
+              name: user.name,
               avatar_url: user.image,
               github_username: profile.login,
             });
@@ -107,7 +107,7 @@ export const authOptions = {
 
           if (profile) {
             session.user.id = profile.id;
-            session.user.name = profile.full_name;
+            session.user.name = profile.name;
           }
         } catch (error) {
           console.error('Session error:', error);
