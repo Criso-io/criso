@@ -1,6 +1,18 @@
 import NextAuth from "next-auth";
 import GithubProvider from "next-auth/providers/github";
-import { supabase } from '@/lib/supabase'
+import { createClient } from '@supabase/supabase-js'
+
+// Create a Supabase client with the service role key for admin operations
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY,
+  {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    }
+  }
+);
 
 export const authOptions = {
   providers: [
@@ -18,61 +30,64 @@ export const authOptions = {
       });
 
       try {
-        // Convert GitHub ID to UUID format
-        const userId = user.id.toString().padStart(32, '0')
-        const formattedId = [
-          userId.slice(0, 8),
-          userId.slice(8, 12),
-          userId.slice(12, 16),
-          userId.slice(16, 20),
-          userId.slice(20, 32)
-        ].join('-')
+        // First, create or get user in Supabase auth
+        const { data: supabaseUser, error: createAuthError } = await supabaseAdmin.auth.admin.createUser({
+          email: user.email,
+          email_verified: true,
+          user_metadata: {
+            full_name: user.name,
+            avatar_url: user.image,
+            github_username: profile.login,
+          },
+          password: crypto.randomUUID(), // Required random password
+        });
 
-        console.log('Formatted UUID:', formattedId);
+        if (createAuthError && createAuthError.message !== 'User already registered') {
+          console.error('Error creating Supabase auth user:', createAuthError);
+          return false;
+        }
 
-        // Check if user exists
-        const { data: existingUser, error: checkError } = await supabase
+        // The user ID from Supabase auth
+        const userId = supabaseUser?.user?.id;
+        console.log('Supabase auth user ID:', userId);
+
+        // Now check if user exists in public.users table
+        const { data: existingUser, error: checkError } = await supabaseAdmin
           .from('users')
           .select('id')
-          .eq('id', formattedId)
-          .single()
+          .eq('id', userId)
+          .single();
 
         if (checkError) {
           console.log('Error checking existing user:', checkError);
         }
 
-        console.log('Existing user check:', { existingUser });
-
         if (!existingUser) {
-          console.log('Creating new user with data:', {
-            id: formattedId,
-            email: user.email,
-            name: user.name,
-            avatar_url: user.image,
-          });
+          console.log('Creating new user in public.users');
 
-          // Create new user if they don't exist
-          const { error: createError } = await supabase
+          // Create new user in public.users table
+          const { error: createError } = await supabaseAdmin
             .from('users')
             .insert({
-              id: formattedId,
+              id: userId, // Use the Supabase auth user ID
               email: user.email,
               full_name: user.name,
               avatar_url: user.image,
-            })
+              github_username: profile.login,
+            });
 
           if (createError) {
-            console.error('Error creating user:', createError)
-            return false
+            console.error('Error creating user:', createError);
+            return false;
           }
 
           console.log('Successfully created user');
         }
 
-        return true
+        return true;
       } catch (error) {
-        console.error('SignIn error:', error)
-        return false
+        console.error('SignIn error:', error);
+        return false;
       }
     },
     async session({ session, token }) {
@@ -80,47 +95,36 @@ export const authOptions = {
 
       if (session?.user) {
         try {
-          // Convert GitHub ID to UUID format
-          const userId = token.sub.toString().padStart(32, '0')
-          const formattedId = [
-            userId.slice(0, 8),
-            userId.slice(8, 12),
-            userId.slice(12, 16),
-            userId.slice(16, 20),
-            userId.slice(20, 32)
-          ].join('-')
-
-          const { data: profile, error: profileError } = await supabase
+          const { data: profile, error: profileError } = await supabaseAdmin
             .from('users')
             .select('*')
-            .eq('id', formattedId)
-            .single()
+            .eq('email', session.user.email)
+            .single();
 
           if (profileError) {
             console.log('Error fetching profile:', profileError);
           }
 
           if (profile) {
-            session.user.id = formattedId
-            session.user.name = profile.full_name
+            session.user.id = profile.id;
+            session.user.name = profile.full_name;
           }
         } catch (error) {
-          console.error('Session error:', error)
-          session.user.id = token.sub
+          console.error('Session error:', error);
         }
       }
-      return session
+      return session;
     },
     async jwt({ token, account, profile }) {
       console.log('JWT callback', { token, account, profile });
 
-      if (account) {
-        token.id = profile.id
+      if (account && profile) {
+        token.githubUsername = profile.login;
       }
-      return token
+      return token;
     },
   },
-  debug: true, // Enable debug logs
+  debug: true,
 };
 
 const handler = NextAuth(authOptions);
