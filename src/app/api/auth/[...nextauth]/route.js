@@ -11,6 +11,12 @@ export const authOptions = {
   ],
   callbacks: {
     async signIn({ user, account, profile }) {
+      console.log('Starting signIn callback', { 
+        userId: user.id,
+        email: user.email,
+        profile: profile 
+      });
+
       try {
         // Convert GitHub ID to UUID format
         const userId = user.id.toString().padStart(32, '0')
@@ -22,21 +28,36 @@ export const authOptions = {
           userId.slice(20, 32)
         ].join('-')
 
+        console.log('Formatted UUID:', formattedId);
+
         // Check if user exists
-        const { data: existingUser } = await supabase
+        const { data: existingUser, error: checkError } = await supabase
           .from('users')
           .select('id')
           .eq('id', formattedId)
           .single()
 
+        if (checkError) {
+          console.log('Error checking existing user:', checkError);
+        }
+
+        console.log('Existing user check:', { existingUser });
+
         if (!existingUser) {
+          console.log('Creating new user with data:', {
+            id: formattedId,
+            email: user.email,
+            name: user.name,
+            avatar_url: user.image,
+          });
+
           // Create new user if they don't exist
           const { error: createError } = await supabase
             .from('users')
             .insert({
               id: formattedId,
               email: user.email,
-              name: user.name,
+              full_name: user.name,
               avatar_url: user.image,
             })
 
@@ -44,6 +65,8 @@ export const authOptions = {
             console.error('Error creating user:', createError)
             return false
           }
+
+          console.log('Successfully created user');
         }
 
         return true
@@ -53,6 +76,8 @@ export const authOptions = {
       }
     },
     async session({ session, token }) {
+      console.log('Session callback', { session, token });
+
       if (session?.user) {
         try {
           // Convert GitHub ID to UUID format
@@ -65,15 +90,19 @@ export const authOptions = {
             userId.slice(20, 32)
           ].join('-')
 
-          const { data: profile } = await supabase
+          const { data: profile, error: profileError } = await supabase
             .from('users')
             .select('*')
             .eq('id', formattedId)
             .single()
 
+          if (profileError) {
+            console.log('Error fetching profile:', profileError);
+          }
+
           if (profile) {
             session.user.id = formattedId
-            session.user.name = profile.name
+            session.user.name = profile.full_name
           }
         } catch (error) {
           console.error('Session error:', error)
@@ -83,12 +112,15 @@ export const authOptions = {
       return session
     },
     async jwt({ token, account, profile }) {
+      console.log('JWT callback', { token, account, profile });
+
       if (account) {
         token.id = profile.id
       }
       return token
     },
   },
+  debug: true, // Enable debug logs
 };
 
 const handler = NextAuth(authOptions);
