@@ -5,7 +5,7 @@ create extension if not exists "uuid-ossp";
 create table public.users (
     id uuid references auth.users primary key,
     email text unique not null,
-    full_name text,
+    name text,
     github_username text,
     avatar_url text,
     stripe_customer_id text,
@@ -101,11 +101,11 @@ create policy "System can insert monitor checks"
 create or replace function public.handle_new_user()
 returns trigger as $$
 begin
-    insert into public.users (id, email, full_name, avatar_url)
+    insert into public.users (id, email, name, avatar_url)
     values (
         new.id,
         new.email,
-        new.raw_user_meta_data->>'full_name',
+        new.raw_user_meta_data->>'name',
         new.raw_user_meta_data->>'avatar_url'
     );
     return new;
